@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kelembaman — Simulasi Hukum Newton I</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0E1620;
+    --surface: #16212C;
+    --surface-alt: #1E2C39;
+    --border: #2A3946;
+    --text-primary: #ECEFF1;
+    --text-secondary: #93A1AB;
+    --amber: #E8A33D;
+    --teal: #57C7BE;
+    --danger: #E2726F;
+    --success: #6FBF8B;
+  }
+  *{ box-sizing: border-box; }
+  body{
+    margin:0;
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: 'Inter', sans-serif;
+    line-height: 1.65;
+  }
+  h1,h2,h3{ font-family:'Fraunces', serif; font-weight:500; margin:0 0 0.4em; line-height:1.2; }
+  h1{ font-size: clamp(2.1rem, 5vw, 3.1rem); font-weight:600; }
+  h2{ font-size: clamp(1.4rem, 3vw, 1.7rem); }
+  h3{ font-size: 1.05rem; margin-bottom: 0.6em; }
+  p{ color: var(--text-secondary); margin:0 0 1em; max-width: 65ch; }
+  .wrap{ max-width: 1100px; margin:0 auto; padding: 0 24px; }
+
+  header.hero{ padding: 72px 0 48px; border-bottom: 1px solid var(--border); }
+  header.hero .lede{ font-size: 1.02rem; }
+
+  section{ padding: 56px 0; border-bottom: 1px solid var(--border); }
+  section:last-of-type{ border-bottom: none; }
+
+  .exp-grid{
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 28px;
+    margin-top: 24px;
+    align-items: start;
+  }
+  @media (max-width: 860px){
+    .exp-grid{ grid-template-columns: 1fr; }
+  }
+
+  .stage{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+  }
+  .stage canvas{
+    width: 100%;
+    height: auto;
+    display: block;
+    background: linear-gradient(180deg, #1B2A36 0%, #14202A 100%);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+
+  .controls-row{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 18px;
+  }
+  button.action-btn{
+    font-family: 'Inter', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 10px;
+    padding: 11px 18px;
+    cursor: pointer;
+    color: #17110A;
+    background: var(--amber);
+    transition: transform 0.1s ease, opacity 0.15s ease;
+  }
+  button.action-btn:hover{ transform: translateY(-1px); }
+  button.action-btn:disabled{ opacity: 0.45; cursor: not-allowed; transform:none; }
+  button.reset-btn{
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+  }
+  button.reset-btn:hover{ border-color: var(--teal); color: var(--teal); }
+
+  .panel{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 22px 24px;
+  }
+  .panel h3{ color: var(--text-primary); }
+  .status{
+    display: inline-block;
+    font-size: 0.76rem;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: var(--surface-alt);
+    color: var(--text-secondary);
+    margin-bottom: 14px;
+  }
+  .status.moving{ color: var(--teal); }
+  .status.broken{ color: var(--danger); }
+  .status.done{ color: var(--success); }
+
+  .obs-box{
+    background: var(--surface-alt);
+    border-left: 3px solid var(--teal);
+    border-radius: 4px;
+    padding: 14px 16px;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    min-height: 64px;
+  }
+
+  .principle-box{
+    margin-top: 40px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--amber);
+    border-radius: 4px;
+    padding: 18px 22px;
+  }
+  .principle-box p{ margin: 0; }
+
+  footer{ padding: 40px 0 60px; }
+  footer p{ font-size: 0.82rem; }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <h1>Kelembaman &amp; Hukum Newton I</h1>
+    <p class="lede">Sebuah benda cenderung mempertahankan keadaannya — diam tetap diam, bergerak tetap bergerak lurus beraturan — kecuali ada gaya luar yang mengubahnya. Sifat ini disebut kelembaman (inersia). Dua percobaan di bawah mensimulasikan bagaimana sifat ini teramati dalam kehidupan sehari-hari.</p>
+  </div>
+</header>
+
+<main>
+
+  <!-- ================= PERCOBAAN 1 ================= -->
+  <section id="percobaan1">
+    <div class="wrap">
+      <h2>Percobaan 1: Katrol dan Kertas</h2>
+      <p>Sebuah gabungan katrol diletakkan di atas selembar kertas, di atas meja. Amati apa yang terjadi pada katrol ketika kertas ditarik dengan cara yang berbeda.</p>
+
+      <div class="exp-grid">
+        <div class="stage">
+          <canvas id="c1" width="500" height="260"></canvas>
+          <div class="controls-row">
+            <button class="action-btn" id="btnCepat1">Tarik Kertas Cepat</button>
+            <button class="action-btn" id="btnPerlahan1">Tarik Kertas Perlahan &amp; Hentikan Mendadak</button>
+            <button class="action-btn reset-btn" id="btnReset1">Reset</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <span class="status" id="status1">Menunggu percobaan</span>
+          <h3>Pengamatan</h3>
+          <div class="obs-box" id="obs1">Klik salah satu tombol untuk memulai. Perhatikan posisi katrol dibandingkan posisi kertas selama dan sesudah ditarik.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PERCOBAAN 2 ================= -->
+  <section id="percobaan2">
+    <div class="wrap">
+      <h2>Percobaan 2: Tali dan Beban Digantung</h2>
+      <p>Sebuah beban digantung pada statif dengan benang di bagian atas, dan benang tambahan dipasang di bagian bawah beban. Amati benang mana yang putus tergantung cara benang bawah ditarik.</p>
+
+      <div class="exp-grid">
+        <div class="stage">
+          <canvas id="c2" width="480" height="320"></canvas>
+          <div class="controls-row">
+            <button class="action-btn" id="btnPerlahan2">Tarik Benang Bawah Perlahan</button>
+            <button class="action-btn" id="btnCepat2">Tarik Benang Bawah Cepat</button>
+            <button class="action-btn reset-btn" id="btnReset2">Reset</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <span class="status" id="status2">Menunggu percobaan</span>
+          <h3>Pengamatan</h3>
+          <div class="obs-box" id="obs2">Klik salah satu tombol untuk memulai. Perhatikan benang mana — atas atau bawah — yang putus lebih dulu.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap">
+    <div class="principle-box">
+      <p><strong>Kesimpulan:</strong> Kedua percobaan menunjukkan hal yang sama: benda dengan massa tertentu (katrol, beban) memiliki kecenderungan mempertahankan keadaan geraknya. Perubahan gaya yang terjadi sangat cepat tidak memberi cukup waktu bagi benda untuk "ikut merespons", sehingga benda tampak tertinggal (tetap diam) atau justru terus bergerak meski penyebab gerak sudah dihentikan. Inilah bunyi Hukum Newton I: benda akan tetap diam atau bergerak lurus beraturan selama tidak ada gaya total yang bekerja padanya.</p>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>Simulasi ini disederhanakan untuk tujuan pembelajaran dan tidak merepresentasikan perhitungan gaya secara presisi.</p>
+  </div>
+</footer>
+
+<script>
+/* ==================================================================
+   Utilitas animasi bersama
+   ================================================================== */
+function easeOutQuad(t){ return 1 - (1-t)*(1-t); }
+function easeInQuad(t){ return t*t; }
+function easeOutCubic(t){ return 1 - Math.pow(1-t, 3); }
+function easeInOutQuad(t){ return t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2; }
+function lerp(a,b,t){ return a + (b-a)*t; }
+
+function tween(duration, onUpdate, onDone, easingFn){
+  const start = performance.now();
+  function frame(now){
+    const t = Math.min(1, (now - start) / duration);
+    onUpdate(easingFn ? easingFn(t) : t, t);
+    if(t < 1){ requestAnimationFrame(frame); }
+    else if(onDone){ onDone(); }
+  }
+  requestAnimationFrame(frame);
+}
+
+/* ==================================================================
+   PERCOBAAN 1 — Katrol dan Kertas
+   ================================================================== */
+(function(){
+  const canvas = document.getElementById('c1');
+  const ctx = canvas.getContext('2d');
+  const statusEl = document.getElementById('status1');
+  const obsEl = document.getElementById('obs1');
+  const btnCepat = document.getElementById('btnCepat1');
+  const btnPerlahan = document.getElementById('btnPerlahan1');
+  const btnReset = document.getElementById('btnReset1');
+
+  const TABLE_Y = 190;
+  const PAPER_X0 = 150, PAPER_Y = 168, PAPER_W = 210, PAPER_H = 12;
+  const KATROL_X0 = 250, KATROL_W = 64, KATROL_H = 34;
+
+  let gen = 0;
+  let state = { paperOffset: 0, katrolOffset: 0, katrolDrop: 0 };
+
+  function setButtons(disabled){
+    btnCepat.disabled = disabled;
+    btnPerlahan.disabled = disabled;
+  }
+  function setStatus(text, cls){
+    statusEl.textContent = text;
+    statusEl.className = 'status' + (cls ? ' ' + cls : '');
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    // table legs
+    ctx.fillStyle = '#3A2A1E';
+    ctx.fillRect(60, TABLE_Y+18, 14, 46);
+    ctx.fillRect(420, TABLE_Y+18, 14, 46);
+
+    // table top
+    const tg = ctx.createLinearGradient(0, TABLE_Y, 0, TABLE_Y+18);
+    tg.addColorStop(0, '#6E4A30');
+    tg.addColorStop(1, '#4E3220');
+    ctx.fillStyle = tg;
+    ctx.fillRect(30, TABLE_Y, 440, 18);
+
+    // paper
+    const px = PAPER_X0 + state.paperOffset;
+    ctx.fillStyle = '#EDEAE2';
+    ctx.strokeStyle = '#C7C2B4';
+    ctx.lineWidth = 1;
+    ctx.fillRect(px, PAPER_Y, PAPER_W, PAPER_H);
+    ctx.strokeRect(px, PAPER_Y, PAPER_W, PAPER_H);
+    ctx.strokeStyle = 'rgba(0,0,0,0.08)';
+    for(let i=1;i<4;i++){
+      ctx.beginPath();
+      ctx.moveTo(px+10, PAPER_Y + i*(PAPER_H/4));
+      ctx.lineTo(px+PAPER_W-10, PAPER_Y + i*(PAPER_H/4));
+      ctx.stroke();
+    }
+
+    // katrol (gabungan katrol / pulley block)
+    const kx = KATROL_X0 + state.katrolOffset;
+    const ky = PAPER_Y - KATROL_H + state.katrolDrop;
+
+    // shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.25)';
+    ctx.beginPath();
+    ctx.ellipse(kx + KATROL_W/2, PAPER_Y + PAPER_H + 4, KATROL_W/2, 5, 0, 0, Math.PI*2);
+    ctx.fill();
+
+    // hook loop
+    ctx.strokeStyle = '#B7C2C9';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(kx + KATROL_W/2, ky - 8, 7, 0, Math.PI*2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(kx + KATROL_W/2, ky - 1);
+    ctx.lineTo(kx + KATROL_W/2, ky + 4);
+    ctx.stroke();
+
+    // body
+    const bg = ctx.createLinearGradient(kx, ky, kx, ky+KATROL_H);
+    bg.addColorStop(0, '#9AA7AF');
+    bg.addColorStop(1, '#6B7981');
+    ctx.fillStyle = bg;
+    roundRect(ctx, kx, ky, KATROL_W, KATROL_H, 8);
+    ctx.fill();
+
+    // amber stripe
+    ctx.fillStyle = '#E8A33D';
+    ctx.fillRect(kx, ky + KATROL_H/2 - 3, KATROL_W, 6);
+
+    // wheel bolts
+    ctx.fillStyle = '#4A555C';
+    ctx.beginPath(); ctx.arc(kx+14, ky+KATROL_H/2, 6, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(kx+KATROL_W-14, ky+KATROL_H/2, 6, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#C8D1D6';
+    ctx.beginPath(); ctx.arc(kx+14, ky+KATROL_H/2, 2.4, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(kx+KATROL_W-14, ky+KATROL_H/2, 2.4, 0, Math.PI*2); ctx.fill();
+  }
+
+  function roundRect(ctx,x,y,w,h,r){
+    ctx.beginPath();
+    ctx.moveTo(x+r,y);
+    ctx.arcTo(x+w,y,x+w,y+h,r);
+    ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r);
+    ctx.arcTo(x,y,x+w,y,r);
+    ctx.closePath();
+  }
+
+  function resetSim(){
+    gen++;
+    state = { paperOffset: 0, katrolOffset: 0, katrolDrop: 0 };
+    setButtons(false);
+    setStatus('Menunggu percobaan');
+    obsEl.textContent = 'Klik salah satu tombol untuk memulai. Perhatikan posisi katrol dibandingkan posisi kertas selama dan sesudah ditarik.';
+    draw();
+  }
+
+  function tarikCepat(){
+    const myGen = ++gen;
+    setButtons(true);
+    setStatus('Kertas ditarik cepat...', 'moving');
+    obsEl.textContent = 'Kertas meluncur cepat ke samping. Perhatikan: katrol nyaris tidak bergeser.';
+
+    tween(280, (e)=>{
+      if(myGen!==gen) return;
+      state.paperOffset = lerp(0, 260, e);
+      state.katrolOffset = lerp(0, 4, easeOutQuad(e));
+      draw();
+    }, ()=>{
+      if(myGen!==gen) return;
+      tween(180, (e)=>{
+        if(myGen!==gen) return;
+        state.katrolDrop = lerp(0, 12, easeOutQuad(e));
+        draw();
+      }, ()=>{
+        if(myGen!==gen) return;
+        setButtons(false);
+        setStatus('Percobaan selesai', 'done');
+        obsEl.textContent = 'Katrol tetap berada di dekat posisi awalnya walau kertas sudah tertarik jauh. Karena kertas ditarik sangat cepat, gaya gesek antara kertas dan katrol tidak sempat bekerja cukup lama untuk mengubah kecepatan katrol — katrol mempertahankan keadaan diamnya (kelembaman, Hukum Newton I).';
+      }, easeInQuad);
+    }, easeInQuad);
+  }
+
+  function tarikPerlahan(){
+    const myGen = ++gen;
+    setButtons(true);
+    setStatus('Kertas ditarik perlahan...', 'moving');
+    obsEl.textContent = 'Kertas dan katrol bergerak bersama dengan laju tetap yang lambat.';
+
+    const slowDist = 130;
+    tween(1700, (e)=>{
+      if(myGen!==gen) return;
+      state.paperOffset = lerp(0, slowDist, e);
+      state.katrolOffset = lerp(0, slowDist, e);
+      draw();
+    }, ()=>{
+      if(myGen!==gen) return;
+      setStatus('Kertas berhenti mendadak...', 'moving');
+      obsEl.textContent = 'Kertas berhenti seketika, tapi katrol terus bergerak maju sesaat sebelum akhirnya berhenti.';
+      tween(650, (e)=>{
+        if(myGen!==gen) return;
+        state.katrolOffset = lerp(slowDist, slowDist + 55, e);
+        draw();
+      }, ()=>{
+        if(myGen!==gen) return;
+        setButtons(false);
+        setStatus('Percobaan selesai', 'done');
+        obsEl.textContent = 'Selama ditarik perlahan, gesekan sempat mempercepat katrol sehingga ikut bergerak bersama kertas. Namun saat kertas dihentikan mendadak, katrol tetap melaju ke depan karena kelembamannya, sebelum akhirnya berhenti akibat gesekan dengan permukaan kertas (Hukum Newton I).';
+      }, easeOutCubic);
+    }, easeInOutQuad);
+  }
+
+  btnCepat.addEventListener('click', tarikCepat);
+  btnPerlahan.addEventListener('click', tarikPerlahan);
+  btnReset.addEventListener('click', resetSim);
+
+  draw();
+})();
+
+/* ==================================================================
+   PERCOBAAN 2 — Tali dan Beban Digantung
+   ================================================================== */
+(function(){
+  const canvas = document.getElementById('c2');
+  const ctx = canvas.getContext('2d');
+  const statusEl = document.getElementById('status2');
+  const obsEl = document.getElementById('obs2');
+  const btnPerlahan = document.getElementById('btnPerlahan2');
+  const btnCepat = document.getElementById('btnCepat2');
+  const btnReset = document.getElementById('btnReset2');
+
+  const HOOK_X = 350, HOOK_Y = 78;
+  const BEBAN_TOP_Y0 = 148, BEBAN_H = 42, BEBAN_W = 46;
+  const HAND_Y = 268;
+
+  let gen = 0;
+  let state = {
+    bebanOffsetY: 0,
+    upperBroken: false,
+    lowerBroken: false,
+    tensionUpper: 0,
+    tensionLower: 0,
+    shake: 0
+  };
+
+  function setButtons(disabled){
+    btnPerlahan.disabled = disabled;
+    btnCepat.disabled = disabled;
+  }
+  function setStatus(text, cls){
+    statusEl.textContent = text;
+    statusEl.className = 'status' + (cls ? ' ' + cls : '');
+  }
+
+  function threadColor(tension){
+    const r = Math.round(lerp(0xB7, 0xE2, tension));
+    const g = Math.round(lerp(0xC2, 0x72, tension));
+    const b = Math.round(lerp(0xC9, 0x6F, tension));
+    return 'rgb(' + r + ',' + g + ',' + b + ')';
+  }
+
+  function drawBrokenThread(x1,y1,x2,y2,color){
+    // draw two short jagged stubs near each end with a visible gap
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    const midT1 = 0.32, midT2 = 0.68;
+    const mx1 = lerp(x1,x2,midT1), my1 = lerp(y1,y2,midT1);
+    const mx2 = lerp(x1,x2,midT2), my2 = lerp(y1,y2,midT2);
+
+    ctx.beginPath();
+    ctx.moveTo(x1,y1);
+    ctx.lineTo(lerp(x1,mx1,0.5)+4, lerp(y1,my1,0.5));
+    ctx.lineTo(mx1, my1);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(x2,y2);
+    ctx.lineTo(lerp(x2,mx2,0.5)-4, lerp(y2,my2,0.5));
+    ctx.lineTo(mx2, my2);
+    ctx.stroke();
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    // statif base
+    ctx.fillStyle = '#3A4650';
+    ctx.fillRect(160, 292, 140, 12);
+    // vertical pole
+    ctx.fillRect(226, 40, 8, 260);
+    // horizontal arm
+    ctx.fillRect(226, 62, 130, 8);
+    // clamp at end
+    ctx.fillStyle = '#4A555C';
+    ctx.fillRect(348, 58, 12, 22);
+
+    const shakeX = state.shake;
+    const bebanCenterY = (BEBAN_TOP_Y0 + BEBAN_H/2) + state.bebanOffsetY;
+    const bebanTopY = bebanCenterY - BEBAN_H/2;
+    const bebanBottomY = bebanCenterY + BEBAN_H/2;
+
+    // upper thread
+    if(state.upperBroken){
+      drawBrokenThread(HOOK_X, HOOK_Y, HOOK_X + shakeX, bebanTopY, threadColor(state.tensionUpper));
+    } else {
+      ctx.strokeStyle = threadColor(state.tensionUpper);
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(HOOK_X, HOOK_Y);
+      ctx.lineTo(HOOK_X + shakeX, bebanTopY);
+      ctx.stroke();
+    }
+
+    // beban
+    ctx.fillStyle = '#8B98A1';
+    const bx = HOOK_X - BEBAN_W/2 + shakeX;
+    roundRect(ctx, bx, bebanTopY, BEBAN_W, BEBAN_H, 8);
+    ctx.fill();
+    ctx.fillStyle = '#E8A33D';
+    ctx.fillRect(bx, bebanCenterY - 3, BEBAN_W, 6);
+
+    // lower thread
+    if(state.lowerBroken){
+      drawBrokenThread(HOOK_X + shakeX, bebanBottomY, HOOK_X, HAND_Y, threadColor(state.tensionLower));
+    } else {
+      ctx.strokeStyle = threadColor(state.tensionLower);
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(HOOK_X + shakeX, bebanBottomY);
+      ctx.lineTo(HOOK_X, HAND_Y);
+      ctx.stroke();
+    }
+
+    // hand / pull handle
+    ctx.strokeStyle = '#B7C2C9';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(HOOK_X, HAND_Y + 10, 8, 0, Math.PI*2);
+    ctx.stroke();
+  }
+
+  function roundRect(ctx,x,y,w,h,r){
+    ctx.beginPath();
+    ctx.moveTo(x+r,y);
+    ctx.arcTo(x+w,y,x+w,y+h,r);
+    ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r);
+    ctx.arcTo(x,y,x+w,y,r);
+    ctx.closePath();
+  }
+
+  function resetSim(){
+    gen++;
+    state = { bebanOffsetY: 0, upperBroken: false, lowerBroken: false, tensionUpper: 0, tensionLower: 0, shake: 0 };
+    setButtons(false);
+    setStatus('Menunggu percobaan');
+    obsEl.textContent = 'Klik salah satu tombol untuk memulai. Perhatikan benang mana — atas atau bawah — yang putus lebih dulu.';
+    draw();
+  }
+
+  function tarikPerlahan(){
+    const myGen = ++gen;
+    setButtons(true);
+    setStatus('Benang bawah ditarik perlahan...', 'moving');
+    obsEl.textContent = 'Tarikan pada benang bawah diperkuat sedikit demi sedikit dari lemah ke kuat.';
+
+    tween(1600, (e)=>{
+      if(myGen!==gen) return;
+      state.tensionLower = e;
+      state.tensionUpper = e;
+      draw();
+    }, ()=>{
+      if(myGen!==gen) return;
+      state.upperBroken = true;
+      setStatus('Benang atas putus!', 'broken');
+      obsEl.textContent = 'Benang bagian atas putus lebih dulu.';
+      draw();
+      tween(400, (e)=>{
+        if(myGen!==gen) return;
+        state.bebanOffsetY = lerp(0, 26, e);
+        draw();
+      }, ()=>{
+        if(myGen!==gen) return;
+        setButtons(false);
+        setStatus('Percobaan selesai', 'done');
+        obsEl.textContent = 'Karena benang bawah ditarik perlahan, gaya tarikan sempat "diteruskan" ke seluruh sistem — termasuk ke benang atas, yang harus menahan berat beban ditambah gaya tarikan tersebut. Akibatnya benang atas putus lebih dulu, sedangkan beban tetap tergantung pada benang bawah.';
+      }, easeOutCubic);
+    }, easeInOutQuad);
+  }
+
+  function tarikCepat(){
+    const myGen = ++gen;
+    setButtons(true);
+    setStatus('Benang bawah disentak cepat...', 'moving');
+    obsEl.textContent = 'Benang bawah disentak dengan cepat dan mendadak.';
+
+    tween(120, (e)=>{
+      if(myGen!==gen) return;
+      state.tensionLower = e;
+      draw();
+    }, ()=>{
+      if(myGen!==gen) return;
+      state.lowerBroken = true;
+      setStatus('Benang bawah putus!', 'broken');
+      obsEl.textContent = 'Benang bagian bawah putus, beban hampir tidak bergerak.';
+      draw();
+
+      // small shake to convey suddenness, beban stays put
+      let shakeGen = myGen;
+      tween(260, (e)=>{
+        if(shakeGen!==gen) return;
+        state.shake = Math.sin(e*Math.PI*6) * (1-e) * 4;
+        draw();
+      }, ()=>{
+        if(shakeGen!==gen) return;
+        state.shake = 0;
+        setButtons(false);
+        setStatus('Percobaan selesai', 'done');
+        obsEl.textContent = 'Karena sentakan terjadi sangat cepat, beban tidak sempat merespons gaya tersebut — sesuai sifat kelembamannya, beban cenderung tetap diam. Seluruh gaya sentak akhirnya terpusat pada benang bawah sehingga benang itulah yang putus, sementara benang atas tetap menahan beban seperti semula.';
+      });
+    });
+  }
+
+  btnPerlahan.addEventListener('click', tarikPerlahan);
+  btnCepat.addEventListener('click', tarikCepat);
+  btnReset.addEventListener('click', resetSim);
+
+  draw();
+})();
+</script>
+
+</body>
+</html>
